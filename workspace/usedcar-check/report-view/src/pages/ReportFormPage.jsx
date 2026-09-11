@@ -47,7 +47,7 @@ export default function ReportFormPage() {
             inspector: report.inspector || '',
           })
           for (const ri of report.items) {
-            nextRows[ri.item] = {
+            nextRows[ri.item.id] = {
               rating: ri.rating || '',
               description: ri.description || '',
               photos: ri.photos || [],
@@ -147,7 +147,7 @@ export default function ReportFormPage() {
       }
 
       // 上传待传照片：按检测项找到保存后的 ReportItem id
-      const resultIdByItem = Object.fromEntries(saved.items.map((ri) => [ri.item, ri.id]))
+      const resultIdByItem = Object.fromEntries(saved.items.map((ri) => [ri.item.id, ri.id]))
       const groupsToUpload = Object.entries(rows).filter(([, r]) => r.pending.length)
       let done = 0
       const total = groupsToUpload.reduce((n, [, r]) => n + r.pending.length, 0)

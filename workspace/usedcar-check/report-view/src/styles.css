@@ -623,7 +623,9 @@ textarea {
 .compare-table thead th {
   background: #fafbfc;
   position: sticky;
-  top: 56px;
+  /* sticky 相对最近的滚动容器（.table-scroll 因 overflow-x: auto 成为滚动容器），
+     而非视口；top 不为 0 会让表头恒定下移，遮挡首行（发动机）内容 */
+  top: 0;
   z-index: 5;
 }
 .col-item {

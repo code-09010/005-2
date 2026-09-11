@@ -39,23 +39,35 @@ export default function ComparePage() {
       .catch((e) => setError(e.message))
   }, [ids.join(',')])
 
-  // 每行：是否差异较大、最优/最差列索引
+  // 每行：是否差异较大、是否有未评列、最优/最差列索引
   const annotatedRows = useMemo(() => {
     if (!data) return []
     return data.rows.map((row) => {
       const scores = row.cells.map((c) => c.score)
       const present = scores.filter((s) => s !== null)
-      let bigDiff = false
+      // 「有评级 vs 未评」也算差异
+      const mixed = present.length > 0 && present.length < scores.length
+      let scoreDiff = false
       let bestIdx = null
       let worstIdx = null
       if (present.length >= 2) {
         const max = Math.max(...present)
         const min = Math.min(...present)
-        bigDiff = max - min >= BIG_DIFF_THRESHOLD
-        bestIdx = scores.indexOf(max)
-        worstIdx = scores.lastIndexOf(min)
+        scoreDiff = max - min >= BIG_DIFF_THRESHOLD
+        if (scoreDiff) {
+          bestIdx = scores.indexOf(max)
+          worstIdx = scores.lastIndexOf(min)
+        }
       }
-      return { ...row, bigDiff, bestIdx, worstIdx, scores }
+      return {
+        ...row,
+        bigDiff: scoreDiff || mixed,
+        scoreDiff,
+        mixed,
+        bestIdx,
+        worstIdx,
+        scores,
+      }
     })
   }, [data])
 
@@ -80,7 +92,7 @@ export default function ComparePage() {
           </Link>
           <h1>多车并排对比</h1>
           <p className="muted">
-            同一检测项评级分差 ≥ {BIG_DIFF_THRESHOLD} 分时整行高亮；
+            同一检测项评级分差 ≥ {BIG_DIFF_THRESHOLD} 分，或「有评级 vs 未评」时整行高亮；
             <span className="legend-best">绿色</span>为该项最优，
             <span className="legend-worst">红色</span>为该项最差
           </p>
@@ -146,7 +158,8 @@ export default function ComparePage() {
                   <td className="col-item">
                     <div className="compare-item-name">{item.name}</div>
                     <span className="weight-tag">权重 {item.weight}</span>
-                    {row.bigDiff && <span className="diff-flag">差异较大</span>}
+                    {row.scoreDiff && <span className="diff-flag">差异较大</span>}
+                    {row.mixed && <span className="diff-flag">有未评项</span>}
                   </td>
                   {row.cells.map((cell, idx) => {
                     const isBest = idx === row.bestIdx && row.bigDiff

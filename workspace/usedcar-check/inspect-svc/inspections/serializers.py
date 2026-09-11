@@ -39,6 +39,12 @@ class ReportItemSerializer(serializers.ModelSerializer):
         model = ReportItem
         fields = ("id", "item", "rating", "description", "photos")
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # 读取时展开检测项目录（名称/分组/权重），写入仍接受 item 主键
+        data["item"] = InspectionItemSerializer(instance.item).data
+        return data
+
     def validate_rating(self, value):
         if value and value not in RATING_CHOICES:
             raise serializers.ValidationError("评级只能是 优/良/中/差")
